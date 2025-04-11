@@ -14,14 +14,17 @@ const Colors = {
   white: '\x1b[37m',   // 通常ファイル
 } as const;
 
-export async function ls(path: string = '.', options: LsOptions): Promise<void> {
+export async function ls(paths: string | string[], options: LsOptions): Promise<void> {
   try {
-    const stats = await fs.stat(path);
-    if (stats.isDirectory()) {
-      await readDirectory(path, options);
-    } else {
-      const fileInfo = await getFileInfo(basename(path), path, options);
-      console.log(formatFileInfo(fileInfo, options));
+    const pathArray = Array.isArray(paths) ? paths : [paths];
+    for (const path of pathArray) {
+      const stats = await fs.stat(path);
+      if (stats.isDirectory()) {
+        await readDirectory(path, options);
+      } else {
+        const fileInfo = await getFileInfo(basename(path), path, options);
+        console.log(formatFileInfo(fileInfo, options));
+      }
     }
   } catch (error) {
     if (error instanceof Error) {
