@@ -2,6 +2,18 @@ import { FileInfo, LsOptions } from './types';
 import { join, basename } from 'path';
 import * as fs from 'fs/promises';
 
+// ANSIエスケープシーケンス
+const Colors = {
+  reset: '\x1b[0m',
+  blue: '\x1b[34m',    // ディレクトリ
+  cyan: '\x1b[36m',    // シンボリックリンク
+  green: '\x1b[32m',   // 実行可能ファイル
+  yellow: '\x1b[33m',  // デバイスファイル
+  magenta: '\x1b[35m', // 画像ファイル
+  red: '\x1b[31m',     // アーカイブファイル
+  white: '\x1b[37m',   // 通常ファイル
+} as const;
+
 export async function ls(path: string = '.', options: LsOptions): Promise<void> {
   try {
     const stats = await fs.stat(path);
@@ -92,6 +104,8 @@ function formatFileInfo(fileInfo: FileInfo, options: LsOptions): string {
 
 function formatName(fileInfo: FileInfo, options: LsOptions): string {
   let name = fileInfo.name;
+
+  // ファイルタイプに応じたサフィックスを追加
   if (options.classify) {
     if (fileInfo.isDirectory) {
       name += '/';
@@ -101,10 +115,46 @@ function formatName(fileInfo: FileInfo, options: LsOptions): string {
       name += '*';
     }
   }
+
+  // ファイルタイプに応じた色付け
+  if (options.color) {
+    const color = getFileColor(fileInfo);
+    name = `${color}${name}${Colors.reset}`;
+  }
+
   return name;
 }
 
 function isExecutable(mode: string): boolean {
   const permissions = parseInt(mode, 8);
   return (permissions & 0o111) !== 0;
+}
+
+function getFileColor(fileInfo: FileInfo): string {
+  if (fileInfo.isDirectory) {
+    return Colors.blue;
+  }
+  if (fileInfo.isSymbolicLink) {
+    return Colors.cyan;
+  }
+  if (isExecutable(fileInfo.mode)) {
+    return Colors.green;
+  }
+  if (isImageFile(fileInfo.name)) {
+    return Colors.magenta;
+  }
+  if (isArchiveFile(fileInfo.name)) {
+    return Colors.red;
+  }
+  return Colors.white;
+}
+
+function isImageFile(name: string): boolean {
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+  return imageExtensions.some(ext => name.toLowerCase().endsWith(ext));
+}
+
+function isArchiveFile(name: string): boolean {
+  const archiveExtensions = ['.zip', '.tar', '.gz', '.bz2', '.xz', '.7z', '.rar'];
+  return archiveExtensions.some(ext => name.toLowerCase().endsWith(ext));
 } 
