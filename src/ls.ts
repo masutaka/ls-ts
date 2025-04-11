@@ -83,19 +83,28 @@ function formatFileInfo(fileInfo: FileInfo, options: LsOptions): string {
         hour12: true,
         timeZone: 'UTC'
       }),
-      formatName(fileInfo)
+      formatName(fileInfo, options)
     ].join(' ');
   }
 
-  return formatName(fileInfo);
+  return formatName(fileInfo, options);
 }
 
-function formatName(fileInfo: FileInfo): string {
+function formatName(fileInfo: FileInfo, options: LsOptions): string {
   let name = fileInfo.name;
-  if (fileInfo.isDirectory) {
-    name += '/';
-  } else if (fileInfo.isSymbolicLink) {
-    name += '@';
+  if (options.classify) {
+    if (fileInfo.isDirectory) {
+      name += '/';
+    } else if (fileInfo.isSymbolicLink) {
+      name += '@';
+    } else if (isExecutable(fileInfo.mode)) {
+      name += '*';
+    }
   }
   return name;
+}
+
+function isExecutable(mode: string): boolean {
+  const permissions = parseInt(mode, 8);
+  return (permissions & 0o111) !== 0;
 } 

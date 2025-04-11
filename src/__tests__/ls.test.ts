@@ -82,7 +82,7 @@ describe('ls command', () => {
       gid: 1000,
       nlink: 2,
     }));
-    await ls(tempDir, { all: false, long: false });
+    await ls(tempDir, { all: false, long: false, classify: true });
     expect(consoleSpy).toHaveBeenCalledWith('file1.txt/  file2.txt');
   });
 
@@ -97,8 +97,23 @@ describe('ls command', () => {
       gid: 1000,
       nlink: 1,
     }));
-    await ls(tempDir, { all: false, long: false });
+    await ls(tempDir, { all: false, long: false, classify: true });
     expect(consoleSpy).toHaveBeenCalledWith('file1.txt@  file2.txt');
+  });
+
+  it('should handle executable files with -F option', async () => {
+    (fs.lstat as jest.Mock).mockImplementationOnce(() => ({
+      isDirectory: () => false,
+      isSymbolicLink: () => false,
+      size: 1024,
+      mode: 0o755,
+      mtime: new Date('2024-01-01T00:00:00.000Z'),
+      uid: 1000,
+      gid: 1000,
+      nlink: 1,
+    }));
+    await ls(tempDir, { all: false, long: false, classify: true });
+    expect(consoleSpy).toHaveBeenCalledWith('file1.txt*  file2.txt');
   });
 
   it('should handle errors', async () => {
