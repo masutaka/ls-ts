@@ -14,7 +14,7 @@ TypeScriptで実装した`ls`コマンドです。
 
 ```bash
 # リポジトリをクローン
-git clone https://github.com/your-username/ls-ts.git
+git clone https://github.com/masutaka/ls-ts.git
 cd ls-ts
 
 # 依存関係をインストール
