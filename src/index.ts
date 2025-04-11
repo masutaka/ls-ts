@@ -1,20 +1,30 @@
 #!/usr/bin/env node
 
-import { program } from 'commander';
+import { Command } from 'commander';
 import { ls } from './ls';
 
+const program = new Command();
+
 program
-  .option('-a, --all', 'show hidden files')
-  .option('-l, --long', 'use a long listing format')
-  .option('-F, --classify', 'append indicator (one of */=>@|) to entries')
-  .option('--color', 'colorize the output')
-  .argument('[paths...]', 'paths to list')
-  .parse(process.argv);
+  .name('ls')
+  .description('List directory contents')
+  .version('1.0.0')
+  .option('-a, --all', 'Show all files including hidden ones')
+  .option('-l, --long', 'Use a long listing format')
+  .option('-F, --classify', 'Append indicator (one of */=>@|) to entries')
+  .option('--color', 'Colorize the output')
+  .argument('[paths...]', 'Paths to list', ['.'])
+  .action(async (paths: string[], options) => {
+    try {
+      await ls(paths, options);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      } else {
+        console.error('An unknown error occurred');
+      }
+      process.exit(1);
+    }
+  });
 
-const options = program.opts();
-const paths = program.args.length > 0 ? program.args : ['.'];
-
-ls(paths, options).catch((error) => {
-  console.error(`Error: ${error.message}`);
-  process.exit(1);
-}); 
+program.parse(); 
